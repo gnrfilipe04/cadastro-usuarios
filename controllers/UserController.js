@@ -10,16 +10,65 @@ class UserController {
     this.formEl.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      this.addLine(this.getValues());
+      const values = this.getValues();
+
+      if(!values) return false
+
+      this.getphoto().then(
+          content => {
+
+          values.photo = content;
+
+          this.addLine(values);
+        },
+        (e) => {
+
+          console.error(e);
+
+        }
+      );
+    });
+  }
+
+  getphoto() {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+
+      const [...fields] = this.formEl.elements;
+
+      let elements = fields.filter((item) => {
+        return item.name === "photo" ?? item;
+      });
+
+      let file = elements[0].files[0];
+
+      fileReader.onload = () => {
+        resolve(fileReader.result);
+      };
+
+      fileReader.onerror = (e) => {
+        reject(e);
+      };
+
+      fileReader.readAsDataURL(file ? file : resolve("dist/img/boxed-bg.jpg"));
     });
   }
 
   getValues() {
     let user = {};
-
+    let isValid = true;
+    
     const [...fields] = this.formEl.elements;
 
     fields.map((field) => {
+
+      if(['name', 'email', 'password'].indexOf(field.name) > -1 && !field.value){
+
+        field.parentElement.classList.add('has-error')
+        isValid = false
+
+    }
+
       if (field.name) {
         if (field.name == "gender") {
           if (field.checked) {
@@ -32,6 +81,10 @@ class UserController {
         }
       }
     });
+
+    if(!isValid){
+      return false
+  }
 
     return new User(
       user.name,
@@ -61,4 +114,5 @@ class UserController {
 
     this.tableEl.appendChild(tr);
   }
+
 }
